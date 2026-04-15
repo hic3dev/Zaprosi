@@ -3,35 +3,35 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Zaprosi
+namespace ToyStoreQueries
 {
     internal class Program
     {
         public class Material
         {
-            public int KodMaterial { get; set; }
-            public string Materiali { get; set; }
-            public string Gruppa { get; set; }
+            public int MaterialCode { get; set; }
+            public string Name { get; set; }
+            public string AgeGroup { get; set; }
 
-            public Material(int kodMaterial, string materiali, string gruppa)
+            public Material(int code, string name, string ageGroup)
             {
-                KodMaterial = kodMaterial;
-                Materiali = materiali;
-                Gruppa = gruppa;
+                MaterialCode = code;
+                Name = name;
+                AgeGroup = ageGroup;
             }
         }
 
-        public class Igrushka
+        public class Toy
         {
             public string Name { get; set; }
-            public int KodMaterial { get; set; }
-            public DateTime Mesyac { get; set; }
+            public int MaterialCode { get; set; }
+            public DateTime ReleaseDate { get; set; }
 
-            public Igrushka(string name, int kodMaterial, DateTime mesyac)
+            public Toy(string name, int materialCode, DateTime releaseDate)
             {
                 Name = name;
-                KodMaterial = kodMaterial;
-                Mesyac = mesyac;
+                MaterialCode = materialCode;
+                ReleaseDate = releaseDate;
             }
         }
 
@@ -44,66 +44,66 @@ namespace Zaprosi
                 new Material(3, "Металл", "от 10 лет")
             };
 
-            List<Igrushka> igruski = new List<Igrushka>
+            List<Toy> toys = new List<Toy>
             {
-                new Igrushka("Медведь", 1, new DateTime(2022, 10, 11)),
-                new Igrushka("Кролик", 2, new DateTime(2021, 5, 3)),
-                new Igrushka("Машинка", 3, new DateTime(2020, 1, 20)),
-                new Igrushka("Кубики", 4, new DateTime(2023, 7, 7)),
-                new Igrushka("Кукла", 5, new DateTime(2021, 2, 8)),
-                new Igrushka("Лего", 6, new DateTime(2023, 5, 20)),
-                new Igrushka("Мячик", 7, new DateTime(2021, 3, 6))
+                new Toy("Медведь", 1, new DateTime(2022, 10, 11)),
+                new Toy("Кролик", 2, new DateTime(2021, 5, 3)),
+                new Toy("Машинка", 3, new DateTime(2020, 1, 20)),
+                new Toy("Кубики", 1, new DateTime(2023, 7, 7)),
+                new Toy("Кукла", 2, new DateTime(2021, 2, 8)),
+                new Toy("Лего", 1, new DateTime(2023, 5, 20)),
+                new Toy("Мячик", 2, new DateTime(2021, 3, 6))
             };
 
+            var allToys = from t in toys select t;
 
-            var allToys = from t in igruski select t;
+            var sortedByName = from t in toys orderby t.Name descending select t;
 
-            var sortedByName = from t in igruski orderby t.Name descending select t;
-
-            var sortedByNameAndDate = from t in igruski orderby t.Name descending, t.Mesyac descending select t;
-
-            var beforeJune = from t in igruski
-                             where t.Mesyac.Month < 6
-                             select t;
-
-            var mayToAugust = from t in igruski
-                              where t.Mesyac.Month >= 5 && t.Mesyac.Month <= 8
+            var sortedByTwo = from t in toys
+                              orderby t.Name descending, t.ReleaseDate descending
                               select t;
 
+            var beforeJune = from t in toys where t.ReleaseDate.Month < 6 select t;
+
+            var summerToys = from t in toys
+                             where t.ReleaseDate.Month >= 5 && t.ReleaseDate.Month <= 8
+                             select t;
+
+            var joinedData = from t in toys
+                             join m in materials on t.MaterialCode equals m.MaterialCode
+                             select new
+                             {
+                                 ToyName = t.Name,
+                                 MaterialType = m.Name,
+                                 TargetAge = m.AgeGroup
+                             };
+
             string output = "";
-            output += "Все игрушки\n";
-            foreach (var t in allToys)
+
+            output += "a) Все игрушки:\n";
+            foreach (var t in allToys) output += $"{t.Name} (Код: {t.MaterialCode})\n";
+
+            output += "\nb) По имени (убывание):\n";
+            foreach (var t in sortedByName) output += $"{t.Name}\n";
+
+            output += "\nc) По имени и дате:\n";
+            foreach (var t in sortedByTwo) output += $"{t.Name} - {t.ReleaseDate:yyyy-MM-dd}\n";
+
+            output += "\nd) Выпущены до июня:\n";
+            foreach (var t in beforeJune) output += $"{t.Name} ({t.ReleaseDate:MMMM})\n";
+
+            output += "\ne) С мая по август:\n";
+            foreach (var t in summerToys) output += $"{t.Name} ({t.ReleaseDate:MMMM})\n";
+
+            output += "\nf) Объединенные данные (JOIN):\n";
+            foreach (var item in joinedData)
             {
-                output += $"{t.Name} (код: {t.KodMaterial}, выпуск: {t.Mesyac:yyyy-MM-dd})\n";
-            }
-            output += "По убыванию названия\n";
-            foreach (var t in sortedByName)
-            {
-                output += $"{t.Name} (код: {t.KodMaterial}, выпуск: {t.Mesyac:yyyy-MM-dd})\n";
+                output += $"Игрушка: {item.ToyName} | Материал: {item.MaterialType} | Возраст: {item.TargetAge}\n";
             }
 
-            output += "По убыванию названия и даты\n";
-            foreach (var t in sortedByNameAndDate)
-            {
-                output += $"{t.Name} (код: {t.KodMaterial}, выпуск: {t.Mesyac:yyyy-MM-dd})\n";
-            }
-
-            output += "Игрушки, выпущенные ДО июня\n";
-            foreach (var t in beforeJune)
-            {
-                output += $"{t.Name} (выпуск: {t.Mesyac:yyyy-MM-dd})\n";
-            }
-
-            output += "Игрушки, выпущенные с МАЯ по АВГУСТ\n";
-            foreach (var t in mayToAugust)
-            {
-                output += $"{t.Name} (выпуск: {t.Mesyac:yyyy-MM-dd})\n";
-            }
-            string  fileSaving= "zaprosi_output.txt";
-            File.WriteAllText(fileSaving, output);
-
-            Console.WriteLine("Результаты сохранены в файл: " + fileSaving);
-            Console.WriteLine("\n" + output);
+            File.WriteAllText("zaprosi_output.txt", output);
+            Console.WriteLine(output);
+            Console.WriteLine("\nГотово! Результаты в файле zaprosi_output.txt");
         }
     }
 }
